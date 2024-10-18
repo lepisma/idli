@@ -62,11 +62,11 @@
   (setq idli-llm-provider (make-llm-openai :key (auth-info-password (car (auth-source-search :host "api.openai.com"))) :chat-model "gpt-4o"))
   (delete-region (point-min) (point-max))
   (org-mode)
-  (visual-line-mode 1)
   (insert "#+TITLE: " topic "\n\n")
   (idli-generate-debators-prompts topic
                                   (lambda ()
-                                    (insert "This is a debate between " (number-to-string (length idli-debators)) " debators on the above topic. To start with, each member will put their opening arguments one by one."))))
+                                    (insert "This is a debate between " (number-to-string (length idli-debators)) " debators on the above topic. To start with, each member will put their opening arguments one by one.")
+                                    (fill-region (point-min) (point-max)))))
 
 (defun idli-step (debator-name debator-prompt instruction callback)
   "Step ahead and insert response for one debator."
@@ -75,6 +75,7 @@
                     (lambda (response)
                       (with-current-buffer idli-buffer-name
                         (insert "** Debator " debator-name ">\n" (string-trim response) "\n\n")
+                        (fill-region (point-min) (point-max))
                         (funcall callback)))
                     (lambda (err) (error "%s" err)))))
 
