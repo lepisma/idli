@@ -35,6 +35,9 @@
 (require 'llm-openai)
 (require 'org)
 
+(defcustom idli-buffer-name "*idli*"
+  "Buffer name to keep idli conversations.")
+
 (defvar idli-debators nil
   "Variable holding prompts for debators.")
 
@@ -43,51 +46,59 @@
 
 (setq llm-warn-on-nonfree nil)
 
-(defun idli-generate-debators-prompts (topic)
+(defun idli-generate-debators-prompts (topic callback)
   "Generate system prompts for debators for the TOPIC using llm PROVIDER."
   (let ((prompt (llm-make-chat-prompt (format "You have to generate system prompts for LLMs to take different stances in a debate on the topic: '%s'. Prefer to have two stances (pro and anti) only. The prompts should tell the debator to use logic, well framed short arguments, and data points in a debate with others. Each reply by a debator would be an argument or introduction of an stance, nothing else. Other than other stances, the debate moderator might intervene and their point should be respected. Separate each prompt with 5 dashes like this ----- and only give the prompt, no headings." topic))))
-    (cl-remove-if #'string-empty-p
-     (mapcar #'string-trim (string-split (llm-chat idli-llm-provider prompt) "-----")))))
+    (llm-chat-async idli-llm-provider prompt
+                    (lambda (response)
+                      (with-current-buffer idli-buffer-name
+                        (setq idli-debators (cl-remove-if #'string-empty-p (mapcar #'string-trim (string-split response "-----"))))
+                        (funcall callback)))
+                    (lambda (err) (error "%s" err)))))
 
 (defun idli-start (topic)
-  (interactive "s")
+  (interactive "sWrite topic: ")
+  (switch-to-buffer idli-buffer-name)
   (setq idli-llm-provider (make-llm-openai :key (auth-info-password (car (auth-source-search :host "api.openai.com"))) :chat-model "gpt-4o"))
-  (setq idli-debators (idli-generate-debators-prompts topic))
-  (switch-to-buffer (get-buffer-create "*idli*"))
   (delete-region (point-min) (point-max))
   (org-mode)
   (visual-line-mode 1)
   (insert "#+TITLE: " topic "\n\n")
-  (insert "This is a debate between " (number-to-string (length idli-debators)) " debators on the above topic. To start with, each member will put their opening arguments one by one.")
-  (idli-open-all))
+  (idli-generate-debators-prompts topic
+                                  (lambda ()
+                                    (insert "This is a debate between " (number-to-string (length idli-debators)) " debators on the above topic. To start with, each member will put their opening arguments one by one."))))
 
-(defun idli-open (debator-name debator-prompt)
-  "Write opening argument for the debator."
-  (let ((prompt (llm-make-chat-prompt (format "%s\n\nReturn your opening argument on the topic. Don't write anything other than that, no prefix with your name." (buffer-substring-no-properties (point-min) (point-max))) :context debator-prompt)))
-    (insert "** Debator " debator-name ">\n" (string-trim (llm-chat idli-llm-provider prompt)) "\n\n")))
+(defun idli-step (debator-name debator-prompt instruction callback)
+  "Step ahead and insert response for one debator."
+  (let ((prompt (llm-make-chat-prompt (format "%s\n\n%s" (buffer-substring-no-properties (point-min) (point-max)) instruction) :context debator-prompt)))
+    (llm-chat-async idli-llm-provider prompt
+                    (lambda (response)
+                      (with-current-buffer idli-buffer-name
+                        (insert "** Debator " debator-name ">\n" (string-trim response) "\n\n")
+                        (funcall callback)))
+                    (lambda (err) (error "%s" err)))))
+
+(defun idli--step-recursive (labels debators instruction)
+  "Recursively write opening arguments for DEBATORS."
+  (when (and labels debators)
+    (let ((debator-name (car labels))
+          (debator-prompt (car debators)))
+      (idli-step debator-name debator-prompt instruction
+                 (lambda () (idli--step-recursive (cdr labels) (cdr debators) instruction))))))
 
 (defun idli-open-all ()
-  "Write openings for all debators."
-  (goto-char (point-max))
-  (insert "\n\n")
-  (let ((labels '("A" "B" "C" "D" "E" "F" "G")))
-    (dolist (prompt idli-debators)
-      (idli-open (car labels) prompt)
-      (setq labels (cdr labels)))))
-
-(defun idli-continue (debator-name debator-prompt)
-  (let ((prompt (llm-make-chat-prompt (format "%s\n\nReturn your argument based on the above discussion till now. Don't write anything other than that, no prefix with your name." (buffer-substring-no-properties (point-min) (point-max))) :context debator-prompt)))
-    (insert "** Debator " debator-name ">\n" (string-trim (llm-chat idli-llm-provider prompt)) "\n\n")))
-
-(defun idli-continue-all ()
-  "Write continuations for all debators."
+  "Initiate opening arguments for all debators."
   (interactive)
   (goto-char (point-max))
   (insert "\n\n")
-  (let ((labels '("A" "B" "C" "D" "E" "F" "G")))
-    (dolist (prompt idli-debators)
-      (idli-continue (car labels) prompt)
-      (setq labels (cdr labels)))))
+  (idli--step-recursive '("A" "B" "C" "D" "E" "F" "G") idli-debators "Return your opening argument on the topic. Don't write anything other than that, no prefix with your name."))
+
+(defun idli-continue-all ()
+  "Continue arguments for all debators."
+  (interactive)
+  (goto-char (point-max))
+  (insert "\n\n")
+  (idli--step-recursive '("A" "B" "C" "D" "E" "F" "G") idli-debators "Return your argument based on the above discussion till now. Don't write anything other than that, no prefix with your name."))
 
 (provide 'idli)
 
