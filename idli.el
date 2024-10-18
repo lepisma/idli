@@ -63,7 +63,6 @@
 (defun idli-start (topic)
   (interactive "sWrite topic: ")
   (switch-to-buffer idli-buffer-name)
-  (setq idli-llm-provider (make-llm-openai :key (auth-info-password (car (auth-source-search :host "api.openai.com"))) :chat-model "gpt-4o"))
   (delete-region (point-min) (point-max))
   (org-mode)
   (insert "#+TITLE: " topic "\n\n")
