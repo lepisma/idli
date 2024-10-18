@@ -38,16 +38,14 @@
 (defcustom idli-buffer-name "*idli*"
   "Buffer name to keep idli conversations.")
 
+(defcustom idli-llm-provider nil
+  "LLM provider for use in chat.")
+
 (defvar idli-debaters nil
   "Variable holding prompts for debaters.")
 
-(defvar idli-llm-provider nil
-  "Variable holding the LLM provider for use in chat.")
-
 (defvar idli-debater-names '("A" "B" "C" "D" "E" "F" "G" "H" "I")
   "List of symbolic names for debaters.")
-
-(setq llm-warn-on-nonfree nil)
 
 (defun idli-generate-debaters-prompts (topic callback)
   "Generate system prompts for debaters for the TOPIC using llm PROVIDER."
@@ -61,6 +59,7 @@
                         (funcall callback)))
                     (lambda (err) (error "%s" err)))))
 
+;;;###autoload
 (defun idli-start (topic)
   (interactive "sWrite topic: ")
   (switch-to-buffer idli-buffer-name)
