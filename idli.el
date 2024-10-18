@@ -52,11 +52,10 @@
   (let ((prompt (llm-make-chat-prompt (format "You have to generate system prompts for LLMs to take different stances in a debate on the topic: '%s'. Prefer to have two stances (pro and anti) only. The prompts should tell the debater to use logic, well framed short arguments, and data points in a debate with others. Each reply by a debater would be an argument or introduction of an stance, nothing else. Other than other stances, the debate moderator might intervene and their point should be respected. Separate each prompt with 5 dashes like this ----- and only give the prompt, no headings." topic))))
     (llm-chat-async idli-llm-provider prompt
                     (lambda (response)
-                      (with-current-buffer idli-buffer-name
-                        (setq idli-debaters (cl-remove-if #'string-empty-p (mapcar #'string-trim (string-split response "-----"))))
-                        (when (> (length idli-debaters) 3)
-                          (warn "More than 3 debaters in current idli session."))
-                        (funcall callback)))
+                      (setq idli-debaters (cl-remove-if #'string-empty-p (mapcar #'string-trim (string-split response "-----"))))
+                      (when (> (length idli-debaters) 3)
+                        (warn "More than 3 debaters in current idli session."))
+                      (funcall callback))
                     (lambda (err) (error "%s" err)))))
 
 ;;;###autoload
@@ -70,10 +69,11 @@
   (idli-generate-debaters-prompts topic
                                   (lambda ()
                                     (with-current-buffer idli-buffer-name
-                                      (goto-char (point-max))
-                                      (insert "This is a debate between " (number-to-string (length idli-debaters)) " debaters on the above topic. To start with, each member will put their opening arguments one by one.\n\n")
-                                      (fill-region (point-min) (point-max))
-                                      (idli-open-all)))))
+                                      (save-excursion
+                                        (goto-char (point-max))
+                                        (insert "This is a debate between " (number-to-string (length idli-debaters)) " debaters on the above topic. To start with, each member will put their opening arguments one by one.\n\n")
+                                        (fill-region (point-min) (point-max))
+                                        (idli-open-all))))))
 
 (defun idli-step (debater-name debater-prompt instruction callback)
   "Step ahead and insert response for one debater."
@@ -81,10 +81,11 @@
     (llm-chat-async idli-llm-provider prompt
                     (lambda (response)
                       (with-current-buffer idli-buffer-name
-                        (goto-char (point-max))
-                        (insert "** Debater " debater-name "\n" (string-trim response) "\n\n")
-                        (fill-region (point-min) (point-max))
-                        (funcall callback)))
+                        (save-excursion
+                          (goto-char (point-max))
+                          (insert "** Debater " debater-name "\n" (string-trim response) "\n\n")
+                          (fill-region (point-min) (point-max))
+                          (funcall callback))))
                     (lambda (err) (error "%s" err)))))
 
 (defun idli--step-recursive (labels debaters instruction)
