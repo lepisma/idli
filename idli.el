@@ -4,7 +4,7 @@
 
 ;; Author: Abhinav Tushar <abhinav@lepisma.xyz>
 ;; Version: 0.0.1
-;; Package-Requires: ((emacs "29"))
+;; Package-Requires: ((emacs "29") (llm "0.17.2") (org "9.6.15"))
 ;; Keywords: llm, learning
 ;; URL: https://github.com/lepisma/idli
 
@@ -45,7 +45,7 @@
   "Variable holding the LLM provider for use in chat.")
 
 (defvar idli-debater-names '("A" "B" "C" "D" "E" "F" "G" "H" "I")
-  "List of symbolic names to be used for debaters.")
+  "List of symbolic names for debaters.")
 
 (setq llm-warn-on-nonfree nil)
 
