@@ -61,7 +61,8 @@
 
 ;;;###autoload
 (defun idli-start (topic)
-  (interactive "sWrite topic: ")
+  "Start an interactive debate on the given TOPIC."
+  (interactive "sDebate topic: ")
   (switch-to-buffer idli-buffer-name)
   (delete-region (point-min) (point-max))
   (org-mode)
