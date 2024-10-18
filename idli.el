@@ -73,7 +73,8 @@
                                     (with-current-buffer idli-buffer-name
                                       (goto-char (point-max))
                                       (insert "This is a debate between " (number-to-string (length idli-debaters)) " debaters on the above topic. To start with, each member will put their opening arguments one by one.\n\n")
-                                      (fill-region (point-min) (point-max))))))
+                                      (fill-region (point-min) (point-max))
+                                      (idli-open-all)))))
 
 (defun idli-step (debater-name debater-prompt instruction callback)
   "Step ahead and insert response for one debater."
