@@ -16,6 +16,6 @@ Configure:
 #+end_src
 
 Then call ~idli-start~, provide the topic you want to discuss. Then once the
-openings are written, call ~idli-continue-all~ to continue one stage of
-arguments. At any point you can add your points as a moderator under heading ~**
-Moderator~ and then continue the conversation.
+openings are written, call ~idli-continue~ to continue one stage of arguments. At
+any point you can add your points as a moderator under heading ~** Moderator~ and
+then continue the conversation.

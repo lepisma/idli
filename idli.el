@@ -73,7 +73,7 @@
                                         (goto-char (point-max))
                                         (insert "This is a debate between " (number-to-string (length idli-debaters)) " debaters on the above topic. To start with, each member will put their opening arguments one by one.\n\n")
                                         (fill-region (point-min) (point-max))
-                                        (idli-open-all))))))
+                                        (idli-open))))))
 
 (defun idli-step (debater-name debater-prompt instruction callback)
   "Step ahead and insert response for one debater."
@@ -96,12 +96,12 @@
       (idli-step debater-name debater-prompt instruction
                  (lambda () (idli--step-recursive (cdr labels) (cdr debaters) instruction))))))
 
-(defun idli-open-all ()
+(defun idli-open ()
   "Initiate opening arguments for all debaters."
   (interactive)
   (idli--step-recursive idli-debater-names idli-debaters "Return your opening argument on the topic. Don't write anything other than that, no prefix with your name."))
 
-(defun idli-continue-all ()
+(defun idli-continue ()
   "Continue arguments for all debaters."
   (interactive)
   (idli--step-recursive idli-debater-names idli-debaters "Return your argument based on the above discussion till now. Don't write anything other than that, no prefix with your name."))
