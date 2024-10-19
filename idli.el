@@ -99,12 +99,12 @@
 (defun idli-open ()
   "Initiate opening arguments for all debaters."
   (interactive)
-  (idli--step-recursive idli-debater-names idli-debaters "Return your opening argument on the topic. Don't write anything other than that, no prefix with your name."))
+  (idli--step-recursive idli-debater-names idli-debaters "Return your opening argument on the topic. Be short and to the point. Don't write anything other than that, no prefix with your name."))
 
 (defun idli-continue ()
   "Continue arguments for all debaters."
   (interactive)
-  (idli--step-recursive idli-debater-names idli-debaters "Return your argument based on the above discussion till now. Don't write anything other than that, no prefix with your name."))
+  (idli--step-recursive idli-debater-names idli-debaters "Return your argument based on the above discussion till now. Be short and to the point. Don't write anything other than that, no prefix with your name."))
 
 (provide 'idli)
 
