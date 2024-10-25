@@ -47,7 +47,7 @@
 (defcustom idli-opening-instruction "Return your opening argument on the topic. Be short and to the point. Don't write anything other than that, no prefix with your name."
   "Instruction that gets added to the LLM call when we ask a debater to open.")
 
-(defcustom idli-continuation-instruction "Return your argument based on the above discussion till now. Be short and to the point. Don't write anything other than that, no prefix with your name."
+(defcustom idli-continuation-instruction "Return your response based on the discussion till now. Be short and to the point. Don't write anything other than that, no prefix with your name."
   "Instruction that gets added to the LLM call every time we ask for a debater to continue argument.")
 
 (defvar idli-debaters nil
