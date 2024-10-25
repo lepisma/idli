@@ -41,6 +41,15 @@
 (defcustom idli-llm-provider nil
   "LLM provider for use in chat.")
 
+(defcustom idli-debater-generation-instruction "You have to generate system prompts for LLMs to take different stances in a debate on the topic: '%s'. Prefer to have two stances (pro and anti) only. The prompts should tell the debater to use logic, well framed short arguments, and data points in a debate with others. Each reply by a debater would be an argument or introduction of an stance, nothing else. Other than other stances, the debate moderator might intervene and their point should be respected. Separate each prompt with 5 dashes like this ----- and only give the prompt, no headings."
+  "LLM Prompt for generating list of debaters on a given topic.  %s acts as the placeholder for inserting topic.")
+
+(defcustom idli-opening-instruction "Return your opening argument on the topic. Be short and to the point. Don't write anything other than that, no prefix with your name."
+  "Instruction that gets added to the LLM call when we ask a debater to open.")
+
+(defcustom idli-continuation-instruction "Return your argument based on the above discussion till now. Be short and to the point. Don't write anything other than that, no prefix with your name."
+  "Instruction that gets added to the LLM call every time we ask for a debater to continue argument.")
+
 (defvar idli-debaters nil
   "Variable holding prompts for debaters.")
 
@@ -49,7 +58,7 @@
 
 (defun idli-generate-debaters-prompts (topic callback)
   "Generate system prompts for debaters for the TOPIC using llm PROVIDER."
-  (let ((prompt (llm-make-chat-prompt (format "You have to generate system prompts for LLMs to take different stances in a debate on the topic: '%s'. Prefer to have two stances (pro and anti) only. The prompts should tell the debater to use logic, well framed short arguments, and data points in a debate with others. Each reply by a debater would be an argument or introduction of an stance, nothing else. Other than other stances, the debate moderator might intervene and their point should be respected. Separate each prompt with 5 dashes like this ----- and only give the prompt, no headings." topic))))
+  (let ((prompt (llm-make-chat-prompt (format idli-debater-generation-instruction topic))))
     (llm-chat-async idli-llm-provider prompt
                     (lambda (response)
                       (setq idli-debaters (cl-remove-if #'string-empty-p (mapcar #'string-trim (string-split response "-----"))))
@@ -73,7 +82,7 @@
                                         (goto-char (point-max))
                                         (insert "This is a debate between " (number-to-string (length idli-debaters)) " debaters on the above topic. To start with, each member will put their opening arguments one by one.\n\n")
                                         (fill-region (point-min) (point-max))
-                                        (idli-open))))))
+                                        (idli-open-all))))))
 
 (defun idli-step (debater-name debater-prompt instruction callback)
   "Step ahead and insert response for one debater."
@@ -96,15 +105,21 @@
       (idli-step debater-name debater-prompt instruction
                  (lambda () (idli--step-recursive (cdr labels) (cdr debaters) instruction))))))
 
-(defun idli-open ()
+(defun idli-open-all ()
   "Initiate opening arguments for all debaters."
   (interactive)
-  (idli--step-recursive idli-debater-names idli-debaters "Return your opening argument on the topic. Be short and to the point. Don't write anything other than that, no prefix with your name."))
+  (idli--step-recursive idli-debater-names idli-debaters idli-opening-instruction))
 
-(defun idli-continue ()
+(defun idli-continue (debater-label)
+  "Continue argument for one debater specified using DEBATER-LABEL."
+  (interactive (list (completing-read "Choose Debater: " idli-debater-names)))
+  (let ((debater (nth (seq-position idli-debater-names "A" #'string-equal) idli-debaters)))
+    (idli--step-recursive (list debater-label) (list debater) idli-continuation-instruction)))
+
+(defun idli-continue-all ()
   "Continue arguments for all debaters."
   (interactive)
-  (idli--step-recursive idli-debater-names idli-debaters "Return your argument based on the above discussion till now. Be short and to the point. Don't write anything other than that, no prefix with your name."))
+  (idli--step-recursive idli-debater-names idli-debaters idli-continuation-instruction))
 
 (provide 'idli)
 
