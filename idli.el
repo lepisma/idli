@@ -3,7 +3,7 @@
 ;; Copyright (c) 2024 Abhinav Tushar
 
 ;; Author: Abhinav Tushar <abhinav@lepisma.xyz>
-;; Version: 0.0.1
+;; Version: 0.1.0
 ;; Package-Requires: ((emacs "29") (llm "0.17.2") (org "9.6.15"))
 ;; Keywords: llm, learning
 ;; URL: https://github.com/lepisma/idli
